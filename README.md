@@ -1,6 +1,6 @@
-﻿# 动画曲线 · WPS 演示插件
+# 动画曲线 · WPS 演示插件
 
-[![CI](https://github.com/YOUR-NAME/WPS-Curve-Anim/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-NAME/WPS-Curve-Anim/actions/workflows/ci.yml)
+[![CI](https://github.com/ZeroN-glitch/WPS-Curve-Anim/actions/workflows/ci.yml/badge.svg)](https://github.com/ZeroN-glitch/WPS-Curve-Anim/actions/workflows/ci.yml)
 
 给 WPS 演示（PPT）的动画加上**可拖拽的速率曲线**。
 
@@ -80,7 +80,7 @@ docs/
 ```
 
 1. 仓库 Settings → Pages → Source 选 `main` 分支的 `/docs` 目录
-2. 把 `docs/publish.html` 里的地址换成你的真实域名（当前是 `YOUR-NAME` 占位）
+2. 把 `docs/publish.html` 里的地址换成你的真实域名（本仓库已指向 https://zeron-glitch.github.io/WPS-Curve-Anim/addon/）
 3. 用户打开 `https://<你的域名>/publish.html` → 点「安装」
 
 > ⚠️ `github.io` 在国内经常不稳，而**加载项每次启动都要从该地址拉文件**。
@@ -317,6 +317,7 @@ Windows / Linux 版 WPS 演示，个人版需 ≥ 12.1.0.16910。**不支持 Mac
 ## 许可
 
 MIT
+
 
 
 

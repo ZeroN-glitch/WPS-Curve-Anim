@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "type": "commonjs",
-  "homepage": "https://YOUR-NAME.github.io/WPS-Curve-Anim/addon/",
+  "homepage": "https://zeron-glitch.github.io/WPS-Curve-Anim/addon/",
   "keywords": [
     "wps",
     "wpp",
@@ -29,3 +29,4 @@
     "wpsjs": "^2.2.3"
   }
 }
+

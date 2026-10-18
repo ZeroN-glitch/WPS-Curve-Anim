@@ -1,4 +1,4 @@
-﻿// 功能区回调 + 任务窗格管理
+// 功能区回调 + 任务窗格管理
 
 var WPS_Enum = { msoCTPDockPositionLeft: 0, msoCTPDockPositionRight: 2 }
 

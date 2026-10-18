@@ -74,7 +74,7 @@ git push -u origin main
 
 出现红叉基本就是第三种情况——本地跑一次 `npm run release` 再推即可。
 
-> 徽章地址里的 `YOUR-NAME` 要一起换成你的仓库地址，否则 README 顶部会显示一个破图。
+> 徽章地址已指向 ZeroN-glitch/WPS-Curve-Anim；如果仓库换了归属，记得一并改掉，否则 README 顶部会显示破图。
 
 ## 4. 开启 GitHub Pages
 
@@ -117,3 +117,4 @@ git push -u origin main
 
 **Pages 有缓存。** 更新加载项后，用户可能还拿到旧文件；发布页 WPS 侧也有缓存。
 验证新版是否生效，看一眼面板页脚或 `ribbon.xml` 的内容时间戳。
+

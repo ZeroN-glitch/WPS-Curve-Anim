@@ -1,0 +1,19 @@
+﻿node_modules/
+.npm-cache/
+package-lock.json
+
+# 构建产物（由 wpsjs build / publish 生成）
+addin/wps-addon-build/
+addin/wps-addon-publish/
+
+# 本地调试输出（录屏、抽帧、日志、临时 pptx）
+out/
+test/preview/
+*.log
+
+# 离线包走 GitHub Release，不提交进仓库
+release/*.7z
+
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>动画曲线 · WPS 演示插件</title>
+    <style>
+        :root { --blue: #2f7cf6; --ink: #1c2230; --muted: #6b7688; --line: #e6eaf2; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; color: var(--ink); background: #fbfcfe;
+            font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+            line-height: 1.7; -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 780px; margin: 0 auto; padding: 64px 24px 80px; }
+        .badge {
+            display: inline-block; font-size: 12px; letter-spacing: .04em; color: var(--blue);
+            background: #eaf1fe; border-radius: 20px; padding: 3px 12px; margin-bottom: 18px;
+        }
+        h1 { font-size: 34px; line-height: 1.3; margin: 0 0 14px; letter-spacing: -.02em; }
+        h1 span { color: var(--blue); }
+        .sub { font-size: 16px; color: var(--muted); margin: 0 0 34px; }
+        .cta {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--blue); color: #fff; text-decoration: none;
+            padding: 13px 28px; border-radius: 8px; font-size: 16px; font-weight: 600;
+            box-shadow: 0 6px 18px rgba(47, 124, 246, .28);
+        }
+        .cta:hover { background: #1e6ae0; }
+        .meta { font-size: 13px; color: var(--muted); margin-top: 14px; }
+        img.shot { width: 100%; border: 1px solid var(--line); border-radius: 10px; margin: 40px 0 10px; background: #fff; }
+        img.shot.narrow {
+            display: block; width: auto; max-width: 400px; margin-left: auto; margin-right: auto;
+            box-shadow: 0 10px 30px rgba(28, 34, 48, .10);
+        }
+        .cap { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 40px; }
+        h2 { font-size: 18px; margin: 40px 0 12px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+        .card h3 { font-size: 14px; margin: 0 0 6px; }
+        .card p { margin: 0; font-size: 13px; color: var(--muted); }
+        .ok { color: #2c7a45; }
+        .no { color: #b52a2a; }
+        code {
+            background: #f1f4f9; padding: 1px 6px; border-radius: 4px;
+            font-family: Consolas, ui-monospace, monospace; font-size: .92em;
+        }
+        footer {
+            margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
+            font-size: 13px; color: var(--muted);
+        }
+        footer a { color: var(--muted); }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="badge">WPS 演示 · 加载项</div>
+        <h1>给 PPT 动画装上<span>速率曲线</span></h1>
+        <p class="sub">
+            WPS 演示的动画窗格只能拖“平滑开始 / 平滑结束”两个滑块。这个插件补上缺的那一块：
+            一条可以手动拖控制点的贝塞尔曲线，决定动画的速度节奏。
+        </p>
+
+        <a class="cta" href="./publish.html">安装到 WPS →</a>
+        <div class="meta">安装后重启 WPS 演示，功能区会多出一个「动画曲线」选项卡。</div>
+        <div class="meta">装完没反应？看 <a href="./faq.html" style="color:var(--blue)">常见问题排查</a>（含环境体检命令）。</div>
+
+        <img class="shot narrow" src="./pane-only.png" alt="编辑器界面">
+        <div class="cap">任务窗格里的曲线编辑器：拖两个控制点，或点预设，选中形状后一键写入</div>
+
+        <img class="shot" src="./curve_proof.png" alt="实测轨迹与曲线对比">
+        <div class="cap">实测：WPS 播放轨迹（红）跟随写入的关键帧曲线（蓝），与线性（灰）明显不同</div>
+
+        <h2>它怎么工作</h2>
+        <p>
+            PPTX 的动画速率存在时间轴的 <code>p:tavLst</code> 关键帧表里。原生界面不给你这个入口，
+            但 WPS 的 JSAPI 暴露了 <code>PropertyEffect.Points</code>。插件把贝塞尔曲线采样成
+            20~40 个关键帧写进去，播放时就按你的曲线走。
+        </p>
+
+        <h2>能做 / 不能做</h2>
+        <div class="grid">
+            <div class="card">
+                <h3 class="ok">✓ 能做</h3>
+                <p>位置、尺寸、旋转、不透明度、填充色这类<b>属性动画</b>，可以任意曲线，包括回弹。
+                    支持「移出」和「移入」（入场）两种方式。</p>
+            </div>
+            <div class="card">
+                <h3 class="no">✗ 不能做</h3>
+                <p>飞入、擦除、百叶窗这类<b>原生特效</b>，模型里只有两个百分比，做不出真曲线。</p>
+            </div>
+        </div>
+
+        <h2>兼容性</h2>
+        <p>
+            Windows / Linux 版 WPS 演示。个人版需 ≥ 12.1.0.16910，且只能通过安装页部署（旧的文件配置方式已被官方限制）。
+            不支持 Mac 版 WPS。
+        </p>
+
+        <footer>
+            源码与文档在 <a href="https://github.com/YOUR-NAME/WPS-Curve-Anim">GitHub</a> ·
+            <a href="./faq.html">常见问题</a> ·
+            遇到问题请开 issue
+        </footer>
+    </div>
+</body>
+
+</html>

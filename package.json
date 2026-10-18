@@ -1,0 +1,31 @@
+{
+  "name": "wps-curve-anim",
+  "version": "0.1.0",
+  "description": "WPS 演示动画速率曲线编辑器：可拖拽的贝塞尔缓动，烘焙成 p:tavLst 关键帧",
+  "license": "MIT",
+  "private": true,
+  "type": "commonjs",
+  "homepage": "https://YOUR-NAME.github.io/WPS-Curve-Anim/addon/",
+  "keywords": [
+    "wps",
+    "wpp",
+    "presentation",
+    "animation",
+    "easing",
+    "bezier",
+    "addon"
+  ],
+  "scripts": {
+    "dev": "node server.js",
+    "build": "node tools/build_addin.js",
+    "release": "node tools/release.js",
+    "test": "node tools/tests/curve.test.js && node tools/tests/assets.test.js",
+    "doctor": "node tools/doctor.js",
+    "docs:faq": "node tools/build_faq_page.js",
+    "preview:ui": "node tools/make_preview.js",
+    "preview:itest": "node tools/make_itest.js"
+  },
+  "dependencies": {
+    "wpsjs": "^2.2.3"
+  }
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>常见问题 · 动画曲线</title>
+    <style>
+        :root { --blue: #2f7cf6; --ink: #1c2230; --muted: #6b7688; --line: #e6eaf2; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; color: var(--ink); background: #fbfcfe;
+            font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+            line-height: 1.75; -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 80px; }
+        .back { font-size: 13px; color: var(--muted); text-decoration: none; }
+        .back:hover { color: var(--blue); }
+        h1 { font-size: 30px; margin: 12px 0 8px; letter-spacing: -.02em; }
+        h2 { font-size: 21px; margin: 42px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); }
+        h3 { font-size: 16px; margin: 26px 0 8px; color: var(--blue); }
+        p { margin: 10px 0; }
+        a { color: var(--blue); }
+        code {
+            background: #f1f4f9; padding: 1px 6px; border-radius: 4px;
+            font-family: Consolas, ui-monospace, monospace; font-size: .9em;
+        }
+        pre {
+            background: #11161f; color: #d8e2f0; padding: 14px 16px; border-radius: 8px;
+            overflow-x: auto; font-size: 13px; line-height: 1.6;
+        }
+        pre code { background: none; padding: 0; color: inherit; }
+        table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+        th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+        th { background: #f4f7fc; font-weight: 600; }
+        blockquote {
+            margin: 14px 0; padding: 10px 14px; background: #eef3fd;
+            border-left: 3px solid var(--blue); border-radius: 0 6px 6px 0; color: #2f4a73;
+        }
+        ul, ol { padding-left: 22px; }
+        li { margin: 4px 0; }
+        hr { border: 0; border-top: 1px solid var(--line); margin: 34px 0; }
+        footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <a class="back" href="./index.html">← 返回介绍页</a>
+        <h1>常见问题</h1>
+        <p>﻿# 常见问题</p>
+<p>按"现象 → 先查什么 → 怎么解决"组织。</p>
+<hr>
+<h2>装不上 / 看不到</h2>
+<h3>功能区没有「动画曲线」选项卡</h3>
+<p><strong>先跑一遍自动体检，它会把下面这些步骤一次性查完：</strong></p>
+<pre><code>npm run doctor</code></pre>
+<p>输出会逐项打勾，哪一步断了直接看对应那行的提示。</p>
+<p>手工排查的话，按顺序：</p>
+<p><strong>WPS 里必须有文档打开。</strong> 空窗口（启动页）不加载任何加载项——这是 WPS 的行为，不是插件的问题。打开一个 pptx 再看。</p>
+<p>如果还是看不到，按顺序排查：</p>
+<ol>
+<li>安装配置在不在：<code>%APPDATA%\kingsoft\wps\jsaddons\publish.xml</code> 文件里应该有 <code>name="WpsCurveAnim"</code> 和一条 <code>url</code></li>
+<li>发布地址能不能访问：浏览器打开 <code>&lt;你的地址&gt;/ribbon.xml</code>，应该看到以 <code>&lt;customUI</code> 开头的文本 —— 打不开的话 WPS 也拉不到，插件必然不出现</li>
+<li>是不是个人版老版本：个人版需要 <strong>≥ 12.1.0.16910</strong>，更老的版本不支持 publish 模式</li>
+</ol>
+<h3>装完必须重启 WPS</h3>
+<p><code>publish.xml</code> 只在 WPS 启动时读一次。改完配置、更新过加载项，都要<strong>完全退出 WPS 再开</strong>。</p>
+<p>任务窗格同理：面板是常驻页面，关掉再打开可能还是旧缓存，重启最保险。</p>
+<h3>Mac 上装不了</h3>
+<p>WPS 的加载项机制目前只适配 Windows 和 Linux，<strong>Mac 版没有</strong>。这不是我们的选择。</p>
+<hr>
+<h2>面板能用但不好用</h2>
+<h3>控制点拖不动</h3>
+<p>先看面板顶部「精确输入」——展开后可以直接填 <code>x1 / y1 / x2 / y2</code> 四个数， 这条路完全不依赖鼠标事件，任何环境下都能改曲线。</p>
+<p>拖拽失败通常有两个原因：</p>
+<ul>
+<li><strong>点歪了</strong>：只有曲线两端的<strong>两个蓝点</strong>可以拖，曲线中段不行。窗格窄的时候蓝点视觉半径只有 3px 左右</li>
+<li><strong>命中范围</strong>：代码里给了 46px 的命中半径（画布坐标），实际点周围一小圈都能抓住</li>
+</ul>
+<h3>预设点了没反应？其实拖一下更自由</h3>
+<p>那排「线性 / 缓入 / 缓出…」只是快捷方式。<strong>直接用鼠标拖蓝点</strong>就是自定义曲线，拖完预设高亮会消失。</p>
+<h3>面板太窄，按钮挤成两行</h3>
+<p>WPS 任务窗格默认宽度大约 270~330px。把窗格边缘往外拖一点会更舒服， 面板本身在 200px 宽下也能用（会自动隐藏提示文字、缩小标签）。</p>
+<hr>
+<h2>写了动画但效果不对</h2>
+<h3>点了「应用」形状没动</h3>
+<p>三件事按顺序看：</p>
+<ol>
+<li>面板顶部状态栏写的是「未选中形状」还是「已选中 N 个形状」？ 没有选中时，从「目标」下拉框里直接选形状即可，不必在画布上选</li>
+<li>幻灯片的「动画」窗格里有没有多出一条？没有的话说明写入失败，面板状态栏会显示错误</li>
+<li>放映时是不是还停在这一页等点击？把「时机」改成「进页自动播」再试</li>
+</ol>
+<h3>动画跑的方向跟想的不一样</h3>
+<p>起点和终点是<strong>按顺序</strong>用的：形状从绿点走到蓝点。 如果看起来是倒着走的，多半是把两个点拖反了——把绿点（起点）和蓝点（终点）对调即可。</p>
+<p>做入场动画时，终点应该在形状的原位（点一下「= 形状位置」最省事），起点拖到画面外。</p>
+<h3>形状在播放前就露在终点位置了</h3>
+<p>入场动画（起点在别处、终点是形状原位）+「单击时」时可能出现： 效果播放前形状本应隐藏，如果它已经停在原位，点一下会先"闪现"再滑动。</p>
+<p><strong>规避：把「时机」改成「进页自动播」。</strong> 延迟几乎为零，看不出问题。</p>
+<p>想复现或确认这个行为，仓库里有一份现成的检查文件 <code>test/entrance-check.pptx</code>： 打开 → F5 放映 → <strong>什么都别按</strong> → 看那个品红方块在不在原位。</p>
+<h3>动画和原生动画打架</h3>
+<p>本工具是<strong>新增</strong>一条动画，不会修改你已有的动画。同一个形状上如果既有一条原生"飞入"、 又加了一条本工具的位移，两条会叠加——位移量会翻倍。</p>
+<p>需要改已有的原生特效速率？做不到：<code>p:animEffect</code> 只有 <code>accel</code>/<code>decel</code> 两个百分比， 不存在关键帧表（详见 README 的「能做 / 不能做」）。</p>
+<h3>形状跑到画面外了</h3>
+<p>小图上的点是可以拖到版心边缘之外的（数值会显示成负值或超过 100%）， 这时形状确实会飞出画面——这是预期行为，不是 bug。拖回来就好。</p>
+<hr>
+<h2>分发相关</h2>
+<h3>github.io 打不开</h3>
+<p><code>github.io</code> 在国内经常不可用。而加载项<strong>每次启动都要从发布地址拉文件</strong>， 地址不通 = 插件白屏或不加载。</p>
+<p>换 Gitee Pages / Vercel 托管 <code>docs/</code> 即可。换完重跑：</p>
+<pre><code>npm run release https://新地址/addon/</code></pre>
+<p>安装页里的地址会跟着更新。</p>
+<h3>更新后还是旧版本</h3>
+<p>三层缓存都要考虑：</p>
+<ol>
+<li>浏览器缓存 → 强制刷新</li>
+<li>GitHub Pages 缓存 → 等 1~2 分钟</li>
+<li>WPS 侧缓存 → 重启 WPS</li>
+</ol>
+<h3>怎么卸载</h3>
+<p>删除 <code>%APPDATA%\kingsoft\wps\jsaddons\publish.xml</code>，重启 WPS。</p>
+<p>如果是通过公开安装页装的，也可以打开安装页点「卸载」。</p>
+        <footer>
+            装不上或行为异常，先跑 <code>npm run doctor</code> 做一次环境体检。
+        </footer>
+    </div>
+</body>
+
+</html>

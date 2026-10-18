@@ -1,0 +1,12 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OnAddinLoad">
+    <ribbon startFromScratch="false">
+        <tabs>
+            <tab id="curveTab" label="动画曲线">
+                <group id="curveGroup" label="速率曲线">
+                    <button id="btnEditor" label="曲线编辑器" onAction="OnAction" getEnabled="OnGetEnabled"
+                        getVisible="OnGetVisible" getImage="GetImage" size="large"/>
+                </group>
+            </tab>
+        </tabs>
+    </ribbon>
+</customUI>

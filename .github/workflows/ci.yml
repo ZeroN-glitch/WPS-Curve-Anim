@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 单测与语法检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 测试不依赖任何 npm 包，所以不装依赖，跑得快也不会因为依赖挂了变红
+      - name: 语法检查
+        run: |
+          for f in addin/main.js addin/js/*.js; do
+            echo "check $f"
+            node --check "$f"
+          done
+
+      - name: 单元测试（曲线逻辑 + 资源完整性）
+        run: npm test
+
+      - name: 确认发布产物与源码一致
+        run: |
+          # docs/addon 是给 GitHub Pages 用的副本，必须和 addin/ 同步
+          for f in ribbon.xml js/curve.js js/ribbon.js ui/editor.html images/curve.svg; do
+            a=$(sha256sum "addin/$f" | cut -d' ' -f1)
+            b=$(sha256sum "docs/addon/$f" | cut -d' ' -f1)
+            if [ "$a" != "$b" ]; then
+              echo "::error file=docs/addon/$f::与 addin/$f 不一致，需要重新 npm run release"
+              exit 1
+            fi
+          done
+          echo "发布产物与源码一致"

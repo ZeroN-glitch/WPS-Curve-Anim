@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>动画曲线</title>
+    <style>
+        /* ---------- 设计变量 ---------- */
+        :root {
+            --bg: #f6f8fc;
+            --card: #ffffff;
+            --ink: #1d2530;
+            --ink2: #4a5666;
+            --muted: #8a95a8;
+            --line: #e8edf5;
+            --line2: #dbe4f0;
+            --accent: #2f7cf6;
+            --accent-soft: #edf3ff;
+            --radius: 10px;
+            --shadow: 0 1px 2px rgba(20, 32, 54, .05), 0 6px 18px rgba(20, 32, 54, .05);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 12px 12px 26px;
+            font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+            font-size: 12px; line-height: 1.5; color: var(--ink);
+            background: linear-gradient(180deg, #f8fafd 0%, #f2f6fb 100%);
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+        }
+
+        /* ---------- 头部 ---------- */
+        .hd { display: flex; align-items: center; gap: 7px; margin: 2px 0 7px; }
+        .logo {
+            width: 20px; height: 20px; border-radius: 6px; flex: none; position: relative;
+            background: linear-gradient(145deg, #5b9bff, #2f7cf6);
+            box-shadow: 0 2px 6px rgba(47, 124, 246, .35);
+        }
+        .logo::after {
+            content: ""; position: absolute; inset: 4px; border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .92);
+            border-bottom-color: transparent; border-left-color: transparent;
+            transform: rotate(-45deg);
+        }
+        .hd h1 { font-size: 13px; font-weight: 600; margin: 0; letter-spacing: .01em; }
+        .ver {
+            margin-left: auto; font-size: 10px; color: var(--muted); line-height: 16px;
+            border: 1px solid var(--line); border-radius: 20px; padding: 0 7px; background: #fff;
+        }
+        .hint { color: var(--muted); font-size: 11px; margin: 0 0 9px; }
+        .hint b { color: var(--accent); font-weight: 600; }
+
+        /* ---------- 状态条 ---------- */
+        #status {
+            font-size: 11px; padding: 6px 9px; border-radius: 8px;
+            background: var(--accent-soft); color: #2f5ea8;
+            border: 1px solid rgba(47, 124, 246, .12);
+            margin-bottom: 9px; min-height: 26px; word-break: break-all;
+        }
+        #status.ok { background: #eaf7f0; color: #26714a; border-color: rgba(44, 156, 98, .16); }
+        #status.err { background: #fdeeee; color: #a83232; border-color: rgba(210, 75, 75, .16); }
+
+        /* ---------- 卡片 ---------- */
+        .card {
+            background: var(--card); border: 1px solid var(--line);
+            border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 9px 10px 10px; margin-bottom: 9px;
+        }
+        .card.pad-sm { padding: 8px 10px; }
+        .ct {
+            font-size: 10px; font-weight: 600; letter-spacing: .08em; color: var(--muted);
+            display: flex; align-items: center; gap: 5px; margin-bottom: 7px;
+        }
+        .ct::before {
+            content: ""; width: 3px; height: 9px; border-radius: 2px;
+            background: linear-gradient(180deg, #6aa2ff, #2f7cf6);
+        }
+
+        canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
+        #cv, #map {
+            border: 1px solid var(--line); border-radius: 8px;
+            background: #fbfcff;
+        }
+        #map { margin-top: 7px; margin-bottom: 0; }
+
+        /* ---------- 预设胶囊 ---------- */
+        .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 0; }
+        .chip {
+            padding: 3px 10px; border-radius: 20px; background: #fff;
+            border: 1px solid var(--line2); cursor: pointer; font-size: 11px;
+            color: var(--ink2); transition: border-color .15s, color .15s, box-shadow .15s;
+        }
+        .chip:hover { border-color: #a9c8ff; color: var(--accent); }
+        .chip.on {
+            background: linear-gradient(180deg, #4d90fb, #2f7cf6); border-color: #2f7cf6;
+            color: #fff; box-shadow: 0 2px 8px rgba(47, 124, 246, .35);
+        }
+
+        /* ---------- 参数行 ---------- */
+        .row { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; }
+        .row.tight { margin: 0; }
+        .row label { width: 54px; flex: none; color: var(--ink2); font-size: 11px; }
+        .row .val {
+            width: 50px; flex: none; text-align: right; font-weight: 600;
+            color: var(--accent); font-variant-numeric: tabular-nums;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none; appearance: none; flex: 1; min-width: 0;
+            height: 4px; border-radius: 3px; outline: none;
+            background: linear-gradient(90deg, #bcd4ff, #e9eff9);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+            background: #fff; border: 2px solid var(--accent); cursor: grab;
+            box-shadow: 0 1px 4px rgba(47, 124, 246, .4);
+        }
+        input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; }
+
+        select {
+            flex: 1; min-width: 0; font-size: 11px; color: var(--ink);
+            padding: 4px 22px 4px 7px; border: 1px solid var(--line2);
+            border-radius: 7px; background-color: #fff; cursor: pointer;
+            -webkit-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a95a8' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 7px center;
+        }
+        select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47, 124, 246, .12); }
+
+        /* ---------- 起止点行 ---------- */
+        .maprow {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 6px; margin: 6px 0 0; font-size: 11px; color: var(--ink2);
+        }
+        .maprow .cap { display: flex; align-items: center; gap: 5px; }
+        .maprow i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .maprow i.pFrom { background: #22b573; box-shadow: 0 0 0 3px rgba(34, 181, 115, .15); }
+        .maprow i.pTo { background: var(--accent); box-shadow: 0 0 0 3px rgba(47, 124, 246, .15); }
+        .maprow b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+        button.mini {
+            font-size: 10px; padding: 2px 9px; border: 1px solid var(--line2); background: #fff;
+            border-radius: 20px; cursor: pointer; color: var(--ink2); white-space: nowrap;
+            transition: border-color .15s, color .15s;
+        }
+        button.mini:hover { border-color: #a9c8ff; color: var(--accent); }
+        button.mini:active { background: var(--accent-soft); }
+
+        /* ---------- 精确输入 ---------- */
+        #precise { margin-top: 8px; font-size: 11px; color: var(--muted); }
+        #precise summary { cursor: pointer; outline: none; list-style: none; }
+        #precise summary::-webkit-details-marker { display: none; }
+        #precise summary::before { content: "\25B8  "; }
+        #precise[open] summary::before { content: "\25BE  "; }
+        #precise summary:hover { color: var(--accent); }
+        .pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px; margin-top: 7px; }
+        .pgrid label { display: flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; }
+        .pgrid input {
+            width: 100%; min-width: 0; padding: 3px 5px; border: 1px solid var(--line2);
+            border-radius: 6px; font-size: 11px; background: #fff; color: var(--ink);
+        }
+        .pgrid input:focus { outline: none; border-color: var(--accent); }
+
+        /* ---------- 节奏预览 ---------- */
+        #track {
+            height: 24px; margin: 9px 0 0; position: relative; overflow: hidden;
+            background: linear-gradient(180deg, #fbfcff, #f4f7fc);
+            border: 1px solid var(--line); border-radius: 12px;
+        }
+        #track::after {
+            content: ""; position: absolute; left: 12px; right: 12px; top: 50%;
+            height: 1px; background: repeating-linear-gradient(90deg, #dfe6f0 0 4px, transparent 4px 8px);
+        }
+        #dot {
+            position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+            border-radius: 50%; z-index: 1;
+            background: radial-gradient(circle at 35% 30%, #7fb0ff, #2f7cf6);
+            box-shadow: 0 2px 6px rgba(47, 124, 246, .45);
+        }
+
+        /* ---------- 主按钮 ---------- */
+        #btnApply {
+            width: 100%; padding: 10px; border: 0; border-radius: 9px;
+            background: linear-gradient(180deg, #4d90fb, #2f7cf6);
+            color: #fff; font-size: 13px; font-weight: 600; letter-spacing: .02em;
+            cursor: pointer; box-shadow: 0 4px 14px rgba(47, 124, 246, .35);
+            transition: transform .08s, filter .15s, box-shadow .15s;
+        }
+        #btnApply:hover { filter: brightness(1.05); }
+        #btnApply:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(47, 124, 246, .3); }
+        #btnApply:disabled { filter: grayscale(.35) brightness(.95); cursor: default; box-shadow: none; }
+
+        .actions {
+            position: sticky; bottom: 0; padding-top: 12px;
+            background: linear-gradient(180deg, rgba(246, 248, 252, 0), #f4f7fb 38%);
+        }
+        .foot { margin-top: 8px; color: #a6b0c0; font-size: 10px; text-align: center; }
+        .foot a { color: #a6b0c0; cursor: pointer; text-decoration: underline; }
+
+        /* ---------- 窄窗格（WPS 任务窗格常见 270~330px） ---------- */
+        @media (max-width: 300px) {
+            body { padding: 9px 9px 20px; }
+            .hint { display: none; }
+            .card { padding: 8px 9px 9px; margin-bottom: 8px; }
+            .row label { width: 46px; }
+            .row .val { width: 44px; }
+            .ct { margin-bottom: 5px; }
+        }
+    </style>
+    <script type="text/javascript" src="../js/curve.js"></script>
+</head>
+
+<body>
+    <script>
+        // 真机探针：只在本地调试端口上回报，正式环境是空函数
+        (function () {
+            var dev = location.port === '39123';
+            window.panelLog = function (msg) {
+                if (!dev) return;
+                try { fetch('http://127.0.0.1:39123/log', { method: 'POST', body: String(msg) }); } catch (e) { }
+            };
+            window.panelLog('[pane] 页面已加载  Application=' + (typeof window.Application) +
+                '  CurveAnim=' + (typeof window.CurveAnim) +
+                '  PointerEvent=' + (typeof window.PointerEvent));
+            setTimeout(function () {
+                var n = -1, err = '';
+                try { n = CurveAnim.listShapes().length; } catch (e) { err = e.message; }
+                window.panelLog('[pane] listShapes=' + n + (err ? '  错误: ' + err : ''));
+            }, 800);
+        })();
+    </script>
+    <header class="hd">
+        <span class="logo"></span>
+        <h1>动画曲线</h1>
+        <span class="ver">v0.1</span>
+    </header>
+    <p class="hint">拖<b>蓝点</b>改速率 · 拖版心上的点定起止</p>
+
+    <div id="status">正在读取选择…</div>
+
+    <section class="card pad-sm">
+        <div class="row tight"><label>目标</label><select id="target"><option value="">跟随当前选区</option></select></div>
+    </section>
+
+    <section class="card">
+        <div class="ct">速率曲线</div>
+        <canvas id="cv" width="620" height="430"></canvas>
+        <div class="chips" id="chips"></div>
+        <div id="track"><div id="dot"></div></div>
+        <details id="precise">
+            <summary>精确输入（拖不动时用）</summary>
+            <div class="pgrid">
+                <label>把手1 x<input type="number" id="q0" step="0.01" min="0" max="1"></label>
+                <label>y<input type="number" id="q1" step="0.01"></label>
+                <label>把手2 x<input type="number" id="q2" step="0.01" min="0" max="1"></label>
+                <label>y<input type="number" id="q3" step="0.01"></label>
+            </div>
+        </details>
+    </section>
+
+    <section class="card">
+        <div class="ct">起点 → 终点</div>
+        <div class="maprow">
+            <span class="cap"><i class="pFrom"></i>起点 <b id="fromV">—</b></span>
+            <button class="mini" id="fromCur" title="起点 = 形状现在所在的位置">= 形状位置</button>
+        </div>
+        <div class="maprow">
+            <span class="cap"><i class="pTo"></i>终点 <b id="toV">—</b></span>
+            <button class="mini" id="toCur" title="终点 = 形状现在所在的位置">= 形状位置</button>
+        </div>
+        <canvas id="map" width="560" height="315"></canvas>
+    </section>
+
+    <section class="card">
+        <div class="ct">节奏</div>
+        <div class="row"><label>时长</label><input type="range" id="dur" min="0.2" max="10" step="0.1" value="2"><span class="val" id="durV">2.0s</span></div>
+        <div class="row"><label>关键帧</label><input type="range" id="frames" min="4" max="60" step="1" value="24"><span class="val" id="framesV">24</span></div>
+        <div class="row"><label>时机</label><select id="trigger">
+                <option value="auto">进页自动播</option>
+                <option value="with">与上一动画同时</option>
+                <option value="click">单击时</option>
+            </select></div>
+    </section>
+
+    <div class="actions">
+        <button id="btnApply">应用到选中形状</button>
+        <div class="foot">WPS 演示动画曲线编辑器<span id="devFoot" style="display:none"> · <a id="lnkSelfTest">自测</a></span></div>
+    </div>
+
+    <script>
+        // ================= 画布 =================
+        var cv = document.getElementById('cv');
+        var ctx = cv.getContext('2d');
+        var PAD = 46;                       // 画布内边距（620x430）
+        // 纵向要容得下所有预设：回弹的 P1.y = 1.56，所以上限不能低于它，
+        // 否则控制点会被画到画布外、鼠标够不着。
+        var YMIN = -0.22, YMAX = 1.7;
+        var W = cv.width, H = cv.height;
+
+        var state = {
+            p: [0.65, 0, 0.35, 1],
+            preset: 'easeInOut',
+            dur: 2,
+            frames: 24,
+            trigger: 'auto',
+            // 起止点用版心归一化坐标（0~1），和幻灯片上的实际位置一一对应
+            from: { x: 0.15, y: 0.4 },
+            to: { x: 0.45, y: 0.4 },
+            shapePos: null      // 目标形状当前的位置，画在小图上做参照
+        };
+
+        function tx(t) { return PAD + t * (W - 2 * PAD); }
+        function ty(v) { return H - PAD - ((v - YMIN) / (YMAX - YMIN)) * (H - 2 * PAD); }
+        function invX(px) { return Math.min(1, Math.max(0, (px - PAD) / (W - 2 * PAD))); }
+        function invY(py) { return Math.min(YMAX, Math.max(YMIN, YMIN + ((H - PAD - py) / (H - 2 * PAD)) * (YMAX - YMIN))); }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // 单位框 0..1
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(tx(0), ty(1), tx(1) - tx(0), ty(0) - ty(1));
+            ctx.strokeStyle = '#e8e8e8';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(tx(0), ty(1), tx(1) - tx(0), ty(0) - ty(1));
+
+            // 网格
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (var i = 1; i < 5; i++) {
+                var gx = PAD + (W - 2 * PAD) * i / 5;
+                ctx.beginPath(); ctx.moveTo(gx, ty(1)); ctx.lineTo(gx, ty(0)); ctx.stroke();
+                var gy = ty(1) + (ty(0) - ty(1)) * i / 5;
+                ctx.beginPath(); ctx.moveTo(tx(0), gy); ctx.lineTo(tx(1), gy); ctx.stroke();
+            }
+
+            // 对角线（线性参考）
+            ctx.setLineDash([6, 6]);
+            ctx.strokeStyle = '#d5d5d5';
+            ctx.beginPath(); ctx.moveTo(tx(0), ty(0)); ctx.lineTo(tx(1), ty(1)); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 手柄连线
+            ctx.strokeStyle = '#a9c5f2';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(tx(0), ty(0)); ctx.lineTo(tx(state.p[0]), ty(state.p[1])); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(tx(1), ty(1)); ctx.lineTo(tx(state.p[2]), ty(state.p[3])); ctx.stroke();
+
+            // 曲线
+            var ease = CurveAnim.bezier(state.p[0], state.p[1], state.p[2], state.p[3]);
+            ctx.save();
+            ctx.shadowColor = 'rgba(47,124,246,.28)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetY = 4;
+            ctx.strokeStyle = '#2f7cf6';
+            ctx.lineWidth = 4;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            for (var k = 0; k <= 100; k++) {
+                var t = k / 100, x = tx(t), y = ty(ease(t));
+                if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // 端点 + 控制点
+            function handle(px, py, color) {
+                ctx.beginPath(); ctx.arc(px, py, 11, 0, Math.PI * 2);
+                ctx.fillStyle = color; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+            }
+            handle(tx(0), ty(0), '#b9b9b9');
+            handle(tx(1), ty(1), '#b9b9b9');
+            handle(tx(state.p[0]), ty(state.p[1]), '#2f7cf6');
+            handle(tx(state.p[2]), ty(state.p[3]), '#2f7cf6');
+        }
+
+        // ================= 拖拽 =================
+        // WPS 任务窗格是嵌入式 Chromium，PointerEvent 不一定齐全；没有就退回鼠标事件。
+        // move/up 挂在 window 上，拖到画布外面也不会断。
+        var drag = -1;
+        var hasPointer = !!window.PointerEvent;
+        function evPoint(ev) {
+            var r = cv.getBoundingClientRect();
+            return {
+                x: (ev.clientX - r.left) * (W / r.width),
+                y: (ev.clientY - r.top) * (H / r.height)
+            };
+        }
+        function pickHandle(q) {
+            var d1 = Math.hypot(q.x - tx(state.p[0]), q.y - ty(state.p[1]));
+            var d2 = Math.hypot(q.x - tx(state.p[2]), q.y - ty(state.p[3]));
+            if (d1 < 46 && d1 <= d2) return 0;
+            if (d2 < 46) return 1;
+            return -1;
+        }
+        function onDown(ev) {
+            var q = evPoint(ev);
+            drag = pickHandle(q);
+            if (window.panelLog) {
+                window.panelLog('[down] client=' + ev.clientX + ',' + ev.clientY +
+                    ' canvas=' + q.x.toFixed(0) + ',' + q.y.toFixed(0) + ' hit=' + drag);
+            }
+            if (drag < 0) return;
+            if (ev.preventDefault) ev.preventDefault();
+            cv.style.cursor = 'grabbing';
+            if (hasPointer && cv.setPointerCapture && ev.pointerId !== undefined) {
+                try { cv.setPointerCapture(ev.pointerId); } catch (e) { }
+            }
+        }
+        function onMove(ev) {
+            if (drag < 0) return;
+            var q = evPoint(ev);
+            if (drag === 0) { state.p[0] = invX(q.x); state.p[1] = invY(q.y); }
+            else { state.p[2] = invX(q.x); state.p[3] = invY(q.y); }
+            state.preset = null;
+            markChips(); draw(); syncInputs(); replay();
+            if (ev.cancelable && ev.preventDefault) ev.preventDefault();
+        }
+        function onUp() {
+            if (drag < 0) return;
+            drag = -1;
+            cv.style.cursor = 'grab';
+            window.panelLog('[drag] p=' + state.p.map(function (v) { return v.toFixed(3); }).join(','));
+        }
+        cv.addEventListener(hasPointer ? 'pointerdown' : 'mousedown', onDown);
+        window.addEventListener(hasPointer ? 'pointermove' : 'mousemove', onMove);
+        window.addEventListener(hasPointer ? 'pointerup' : 'mouseup', onUp);
+        window.addEventListener(hasPointer ? 'pointercancel' : 'blur', onUp);
+        cv.style.cursor = 'grab';
+
+        // ================= 预设 =================
+        var chipsEl = document.getElementById('chips');
+        Object.keys(CurveAnim.PRESETS).forEach(function (key) {
+            var d = document.createElement('div');
+            d.className = 'chip' + (key === state.preset ? ' on' : '');
+            d.textContent = CurveAnim.PRESETS[key].name;
+            d.dataset.k = key;
+            d.onclick = function () {
+                state.p = CurveAnim.PRESETS[key].p.slice();
+                state.preset = key;
+                markChips(); draw(); syncInputs(); replay();
+            };
+            chipsEl.appendChild(d);
+        });
+        function markChips() {
+            Array.prototype.forEach.call(chipsEl.children, function (c) {
+                c.className = 'chip' + (c.dataset.k === state.preset ? ' on' : '');
+            });
+        }
+
+        // ================= 精确输入（拖不动时的兜底） =================
+        var qEls = ['q0', 'q1', 'q2', 'q3'].map(function (id) { return document.getElementById(id); });
+        function syncInputs() {
+            for (var i = 0; i < 4; i++) qEls[i].value = state.p[i].toFixed(2);
+        }
+        qEls.forEach(function (el, i) {
+            el.onchange = function () {
+                var v = parseFloat(el.value);
+                if (isNaN(v)) { syncInputs(); return; }
+                // x 夹到 0~1，y 夹到画布可视范围（回弹要用到 1.5 左右）
+                v = (i % 2 === 0) ? Math.min(1, Math.max(0, v)) : Math.min(YMAX, Math.max(YMIN, v));
+                state.p[i] = v;
+                state.preset = null;
+                markChips(); draw(); syncInputs(); replay();
+            };
+        });
+        syncInputs();
+
+        // ================= 参数控件 =================
+        function bind(id, key, fmt) {
+            var el = document.getElementById(id), lab = document.getElementById(id + 'V');
+            el.oninput = function () {
+                state[key] = parseFloat(el.value);
+                lab.textContent = fmt(state[key]);
+                replay();
+            };
+            lab.textContent = fmt(state[key]);
+        }
+        bind('dur', 'dur', function (v) { return v.toFixed(1) + 's'; });
+        bind('frames', 'frames', function (v) { return String(v | 0); });
+        document.getElementById('trigger').onchange = function () {
+            state.trigger = this.value;
+        };
+
+        // ================= 预览 =================
+        var dot = document.getElementById('dot');
+        var track = document.getElementById('track');
+        var rafId = null;
+        function replay() {
+            if (rafId) cancelAnimationFrame(rafId);
+            var ease = CurveAnim.bezier(state.p[0], state.p[1], state.p[2], state.p[3]);
+            var t0 = performance.now();
+            var span = Math.max(300, state.dur * 1000);
+            function step(now) {
+                var t = ((now - t0) % span) / span;
+                var w = track.clientWidth - 24;
+                dot.style.left = (3 + ease(t) * w) + 'px';
+                rafId = requestAnimationFrame(step);
+            }
+            rafId = requestAnimationFrame(step);
+        }
+
+        // ================= 状态栏 =================
+        var statusEl = document.getElementById('status');
+        function setStatus(msg, kind) {
+            statusEl.textContent = msg;
+            statusEl.className = kind || '';
+        }
+
+        // 目标下拉框：不依赖选区，直接从当前页形状列表里挑
+        var targetEl = document.getElementById('target');
+        function refreshTargets() {
+            try {
+                // 先用便宜的指纹判断要不要重建，避免每次 tick 都枚举整页形状
+                var key = CurveAnim.slideKey();
+                if (targetEl.dataset.key === key) return;
+                var list = CurveAnim.listShapes();
+                targetEl.dataset.key = key;
+                var cur = targetEl.value;
+                var html = '<option value="">跟随当前选区</option>';
+                list.forEach(function (s) {
+                    html += '<option value="' + s.id + '">' + (s.name || '形状') + ' (id=' + s.id + ')</option>';
+                });
+                targetEl.innerHTML = html;
+                targetEl.value = cur;
+            } catch (e) { }
+        }
+        targetEl.onchange = function () { refreshSelection(); };
+
+        function refreshSelection() {
+            if (targetEl.value) {
+                var t = targetEl.options[targetEl.selectedIndex];
+                setStatus('目标：' + t.textContent + '（下拉框选定，无需在画布上选中）', 'ok');
+                return;
+            }
+            try {
+                var shapes = CurveAnim.selectedShapes();
+                var names = [];
+                for (var i = 0; i < shapes.length && i < 3; i++) {
+                    names.push(shapes[i].Name + '(id=' + shapes[i].Id + ')');
+                }
+                setStatus('已选中 ' + shapes.length + ' 个形状：' + names.join('、'), 'ok');
+            } catch (e) {
+                setStatus('未选中形状 —— 可点上方「目标」直接指定，或在画布上选中', 'err');
+            }
+        }
+
+        // ================= 版心小图：拖起点 / 终点 =================
+        var mapCv = document.getElementById('map');
+        var mctx = mapCv.getContext('2d');
+        var MW = mapCv.width, MH = mapCv.height, MPAD = 16;
+
+        // 可放点的范围比版心大一圈，这样入场动画可以把起点放到画面外
+        var MLO = -0.14, MHI = 1.14;
+
+        function mX(n) { return MPAD + ((n - MLO) / (MHI - MLO)) * (MW - 2 * MPAD); }
+        function mY(n) { return MPAD + ((n - MLO) / (MHI - MLO)) * (MH - 2 * MPAD); }
+        function invMX(px) {
+            var v = MLO + ((px - MPAD) / (MW - 2 * MPAD)) * (MHI - MLO);
+            return Math.min(MHI, Math.max(MLO, v));
+        }
+        function invMY(py) {
+            var v = MLO + ((py - MPAD) / (MH - 2 * MPAD)) * (MHI - MLO);
+            return Math.min(MHI, Math.max(MLO, v));
+        }
+        function pct(v) { return Math.round(v * 100) + '%'; }
+
+        function drawMap() {
+            mctx.clearRect(0, 0, MW, MH);
+
+            // 版心外的区域（灰一点，提示这是画面外）
+            mctx.fillStyle = '#eef1f6';
+            mctx.fillRect(0, 0, MW, MH);
+
+            // 版心本身
+            var sx0 = mX(0), sy0 = mY(0), sx1 = mX(1), sy1 = mY(1);
+            mctx.fillStyle = '#ffffff';
+            mctx.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+            mctx.strokeStyle = '#c9d4e4';
+            mctx.lineWidth = 2;
+            mctx.strokeRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+
+            // 版心内三分参考线
+            mctx.strokeStyle = '#f2f5fa';
+            mctx.lineWidth = 1;
+            for (var i = 1; i < 3; i++) {
+                var gx = sx0 + (sx1 - sx0) * i / 3;
+                var gy = sy0 + (sy1 - sy0) * i / 3;
+                mctx.beginPath(); mctx.moveTo(gx, sy0); mctx.lineTo(gx, sy1); mctx.stroke();
+                mctx.beginPath(); mctx.moveTo(sx0, gy); mctx.lineTo(sx1, gy); mctx.stroke();
+            }
+
+            // 形状当前位置（虚线小方框，只作参照，不可拖）
+            if (state.shapePos) {
+                var px = mX(state.shapePos.x), py = mY(state.shapePos.y);
+                mctx.strokeStyle = '#b9c2d0';
+                mctx.lineWidth = 2;
+                mctx.setLineDash([4, 4]);
+                mctx.strokeRect(px - 10, py - 10, 20, 20);
+                mctx.setLineDash([]);
+            }
+
+            // 路径 + 箭头
+            var x1 = mX(state.from.x), y1 = mY(state.from.y);
+            var x2 = mX(state.to.x), y2 = mY(state.to.y);
+            mctx.strokeStyle = '#9dbdf5';
+            mctx.lineWidth = 3;
+            mctx.beginPath(); mctx.moveTo(x1, y1); mctx.lineTo(x2, y2); mctx.stroke();
+
+            var ang = Math.atan2(y2 - y1, x2 - x1);
+            mctx.fillStyle = '#9dbdf5';
+            mctx.beginPath();
+            mctx.moveTo(x2, y2);
+            mctx.lineTo(x2 - 15 * Math.cos(ang - 0.4), y2 - 15 * Math.sin(ang - 0.4));
+            mctx.lineTo(x2 - 15 * Math.cos(ang + 0.4), y2 - 15 * Math.sin(ang + 0.4));
+            mctx.closePath(); mctx.fill();
+
+            // 两个可拖的点
+            function knob(px, py, color) {
+                mctx.beginPath(); mctx.arc(px, py, 11, 0, Math.PI * 2);
+                mctx.fillStyle = color; mctx.fill();
+                mctx.strokeStyle = '#fff'; mctx.lineWidth = 3; mctx.stroke();
+            }
+            knob(x1, y1, '#22b573');
+            knob(x2, y2, '#2f7cf6');
+
+            document.getElementById('fromV').textContent = pct(state.from.x) + ' , ' + pct(state.from.y);
+            document.getElementById('toV').textContent = pct(state.to.x) + ' , ' + pct(state.to.y);
+        }
+
+        // 拖拽起止点
+        var mapDrag = -1;
+        function mapPoint(ev) {
+            var r = mapCv.getBoundingClientRect();
+            return {
+                x: invMX((ev.clientX - r.left) * (MW / r.width)),
+                y: invMY((ev.clientY - r.top) * (MH / r.height))
+            };
+        }
+        mapCv.addEventListener(hasPointer ? 'pointerdown' : 'mousedown', function (ev) {
+            var r = mapCv.getBoundingClientRect();
+            var px = (ev.clientX - r.left) * (MW / r.width);
+            var py = (ev.clientY - r.top) * (MH / r.height);
+            var d1 = Math.hypot(px - mX(state.from.x), py - mY(state.from.y));
+            var d2 = Math.hypot(px - mX(state.to.x), py - mY(state.to.y));
+            if (d1 < 42 && d1 <= d2) mapDrag = 0;
+            else if (d2 < 42) mapDrag = 1;
+            else return;                       // 点空白处不动，避免误触
+            if (ev.preventDefault) ev.preventDefault();
+            if (hasPointer) { try { mapCv.setPointerCapture(ev.pointerId); } catch (e) { } }
+        });
+        window.addEventListener(hasPointer ? 'pointermove' : 'mousemove', function (ev) {
+            if (mapDrag < 0) return;
+            var q = mapPoint(ev);
+            if (mapDrag === 0) { state.from.x = q.x; state.from.y = q.y; }
+            else { state.to.x = q.x; state.to.y = q.y; }
+            drawMap();
+            if (ev.cancelable && ev.preventDefault) ev.preventDefault();
+        });
+        window.addEventListener(hasPointer ? 'pointerup' : 'mouseup', function () { mapDrag = -1; });
+        window.addEventListener(hasPointer ? 'pointercancel' : 'blur', function () { mapDrag = -1; });
+
+        // 「= 形状位置」
+        function setPoint(which) {
+            if (!state.shapePos) { setStatus('先在上方选一个目标形状', 'err'); return; }
+            var p = { x: state.shapePos.x, y: state.shapePos.y };
+            if (which === 'from') state.from = p; else state.to = p;
+            drawMap();
+        }
+        document.getElementById('fromCur').onclick = function () { setPoint('from'); };
+        document.getElementById('toCur').onclick = function () { setPoint('to'); };
+
+        // 换目标形状时，把起点设成它现在的位置，终点往旁边让 30%
+        function resetPathToShape() {
+            if (!state.shapePos) return;
+            var p = state.shapePos;
+            state.from = { x: p.x, y: p.y };
+            var tx = p.x + 0.3;
+            if (tx > 0.95) tx = p.x - 0.3;
+            state.to = { x: Math.min(0.98, Math.max(0.02, tx)), y: p.y };
+            drawMap();
+        }
+
+        // 跟随目标形状的实际位置刷新参照（拖动形状后小图会跟着变）
+        // 初值用 null 而不是空串：跟随选区时 tid 也是空串，用空串会让第一次同步
+        // 被判定成“没换目标”，导致默认起止点不会自动对齐到形状
+        var lastTargetId = null;
+        function syncShapePos() {
+            var tid = targetEl.value;
+            var pos = null;
+            if (tid) {
+                try { pos = CurveAnim.targetPos(parseInt(tid, 10)); } catch (e) { pos = null; }
+            } else {
+                try {
+                    var sel = CurveAnim.selectedShapes();
+                    if (sel.length) pos = CurveAnim.shapeNormPos(sel[0]);
+                } catch (e) { pos = null; }
+            }
+            if (!pos) return;
+
+            var changedTarget = (lastTargetId === null) || (String(tid) !== lastTargetId);
+            lastTargetId = String(tid);
+            state.shapePos = { x: pos.x, y: pos.y };
+            if (changedTarget) resetPathToShape();
+            else drawMap();
+        }
+
+        // ================= 应用 =================
+        document.getElementById('btnApply').onclick = function () {
+            var btn = this;
+            btn.disabled = true;
+            setStatus('正在写入…');
+            // 参数必须在点击的这一刻就快照下来：下面的 setTimeout 只是为了让
+            // “正在写入…”先渲染出来，期间若用户又改了设置，不能影响这一次写入。
+            var tid = targetEl.value;
+            var opts = {
+                p: state.p.slice(),
+                duration: state.dur,
+                frames: state.frames,
+                trigger: state.trigger,
+                path: {
+                    from: { x: state.from.x, y: state.from.y },
+                    to: { x: state.to.x, y: state.to.y }
+                }
+            };
+            setTimeout(function () {
+                try {
+                    var res = CurveAnim.applyToTarget(tid === '' ? null : parseInt(tid, 10), opts);
+                    var txt = res.map(function (r) {
+                        return 'id=' + r.shapeId + ' ' + r.points + '帧/' + r.duration + 's';
+                    }).join('，');
+                    setStatus('已写入 ' + res.length + ' 个形状：' + txt, 'ok');
+                } catch (e) {
+                    setStatus('失败：' + e.message, 'err');
+                }
+                btn.disabled = false;
+            }, 30);
+        };
+
+        document.getElementById('lnkSelfTest').onclick = function () {
+            try {
+                CurveAnim.selfTest(window.panelLog);
+                setStatus('自测完成：已新建两个方块并写入曲线动画', 'ok');
+            } catch (e) {
+                setStatus('自测失败：' + e.message, 'err');
+            }
+        };
+
+        // ================= 启动 =================
+        // 「自测」会往当前文档插方块，只在本地调试端口暴露
+        if (location.port === '39123') {
+            var df = document.getElementById('devFoot');
+            if (df) df.style.display = 'inline';
+        }
+        draw();
+        replay();
+        drawMap();
+        setTimeout(function () { refreshTargets(); syncShapePos(); refreshSelection(); }, 200);
+        setInterval(function () { refreshTargets(); syncShapePos(); refreshSelection(); }, 1500);
+        window.addEventListener('resize', draw);
+    </script>
+</body>
+
+</html>
+
+
+
+

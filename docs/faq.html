@@ -63,6 +63,21 @@
 <li>发布地址能不能访问：浏览器打开 <code>&lt;你的地址&gt;/ribbon.xml</code>，应该看到以 <code>&lt;customUI</code> 开头的文本 —— 打不开的话 WPS 也拉不到，插件必然不出现</li>
 <li>是不是个人版老版本：个人版需要 <strong>≥ 12.1.0.16910</strong>，更老的版本不支持 publish 模式</li>
 </ol>
+<h3>重启电脑后插件不见了</h3>
+<p>基本都是「WPS 找不到插件文件」这一个原因，具体分两种：</p>
+<p><strong>1. 装的是本地调试地址</strong></p>
+<p>如果注册地址是 <code>http://127.0.0.1:39123/</code> 这类本地地址，那个服务只有开发时才开着， 电脑一重启就没了，插件自然消失。现在能用只是因为服务还活着。</p>
+<p><strong>2. 安装页点了没反应（静默失败）</strong></p>
+<p>安装页并不是自己写文件，它调 WPS 的本地服务 <code>127.0.0.1:58890</code> 来注册。 这个服务没起来时，点「安装」页面不会报错，但什么都没发生。</p>
+<p><strong>怎么查</strong></p>
+<pre><code>node tools/register_addin.js --show</code></pre>
+<p>它会打印当前注册文件指向哪个地址。</p>
+<p><strong>怎么修</strong></p>
+<p>最简单：下载 <a href="./WpsCurveAnim-一键注册.bat">一键注册.bat</a> 双击运行，然后重启 WPS。</p>
+<p>命令行方式（开发者）：</p>
+<pre><code>node tools/register_addin.js https://zeron-glitch.github.io/WPS-Curve-Anim/addon/</code></pre>
+<p>脚本会先确认该地址真能取到 <code>ribbon.xml</code>，再写进注册文件，并自动备份旧的。</p>
+<p><strong>改完要完全退出 WPS</strong>（所有 wps/wpp 窗口），再重新打开。 如果重开后还是不显示，再跑一次 <code>--show</code>：地址被改回去说明 WPS 退出时覆盖了， 那就先退出 WPS，再执行上面的命令，最后启动。</p>
 <h3>装完必须重启 WPS</h3>
 <p><code>publish.xml</code> 只在 WPS 启动时读一次。改完配置、更新过加载项，都要<strong>完全退出 WPS 再开</strong>。</p>
 <p>任务窗格同理：面板是常驻页面，关掉再打开可能还是旧缓存，重启最保险。</p>

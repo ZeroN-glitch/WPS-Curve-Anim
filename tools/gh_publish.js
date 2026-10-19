@@ -26,16 +26,57 @@ const skipRelease = process.argv.includes('--skip-release')
 const dryRun = process.argv.includes('--dry-run')
 const tokenFile = arg('token-file', path.join(require('os').homedir(), '.gh_token'))
 
-function requireToken() {
-    let t = process.env.GH_TOKEN || ''
-    if (!t && fs.existsSync(tokenFile)) t = fs.readFileSync(tokenFile, 'utf8').trim()
-    if (!t) {
-        console.error('没找到令牌。把 GitHub 令牌存到这个文件里（只写一行）：')
-        console.error('  ' + tokenFile)
-        console.error('或者设置环境变量 GH_TOKEN。')
-        process.exit(1)
+// 找令牌：环境变量 -> 指定文件 -> 用户目录里各种常见文件名
+// （记事本另存为经常自动加 .txt，所以不能只认一个名字）
+function findTokenFile() {
+    const home = require('os').homedir()
+    const explicit = [
+        tokenFile,
+        path.join(home, '.gh_token'),
+        path.join(home, '.gh_token.txt'),
+        path.join(home, 'gh_token'),
+        path.join(home, 'gh_token.txt'),
+        path.join(home, '.github_token'),
+        path.join(home, 'Desktop', '.gh_token.txt'),
+        path.join(home, 'Desktop', 'gh_token.txt')
+    ]
+    for (const p of explicit) {
+        try {
+            if (p && fs.existsSync(p) && fs.statSync(p).isFile()) {
+                const t = fs.readFileSync(p, 'utf8').trim()
+                if (t) return { token: t, file: p }
+            }
+        } catch (e) { }
     }
-    return t
+    // 再扫一遍用户目录里名字像令牌的文件
+    try {
+        for (const dir of [home, path.join(home, 'Desktop'), path.join(home, 'Downloads')]) {
+            if (!fs.existsSync(dir)) continue
+            for (const name of fs.readdirSync(dir)) {
+                if (!/^\.?gh[_-]?token/i.test(name)) continue
+                const p = path.join(dir, name)
+                if (!fs.statSync(p).isFile()) continue
+                const t = fs.readFileSync(p, 'utf8').trim()
+                if (t) return { token: t, file: p }
+            }
+        }
+    } catch (e) { }
+    return null
+}
+
+function requireToken() {
+    if (process.env.GH_TOKEN) return process.env.GH_TOKEN.trim()
+    const found = findTokenFile()
+    if (found) {
+        const looksRight = /^(ghp_|github_pat_|gho_|ghu_)/.test(found.token)
+        console.log('令牌来源: ' + found.file + (looksRight ? '' : '  （警告：格式不太像 GitHub 令牌）'))
+        return found.token
+    }
+    console.error('没找到令牌。把 GitHub 令牌存成下面任意一个文件（里面只写一行）：')
+    console.error('  ' + path.join(require('os').homedir(), '.gh_token'))
+    console.error('  ' + path.join(require('os').homedir(), '.gh_token.txt'))
+    console.error('也可以设置环境变量 GH_TOKEN。')
+    process.exit(1)
 }
 let token = ''
 
